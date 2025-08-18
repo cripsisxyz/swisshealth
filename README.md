@@ -10,7 +10,6 @@ This project automates the **download**, **standardization**, **database import*
 - 🐬 MariaDB 11.3
 - 🐳 Docker & Docker Compose
 - 📦 CSV-based datasets from [opendata.swiss](https://opendata.swiss)
-- 🐍📊 Datasette library for exploring and publishing data
 
 ---
 
@@ -21,7 +20,6 @@ The idea is to have full and useful pipelines inside the "datasets" directory. E
 1. Downloading the needed files / databases for building a dataset
 2. Cooking the dataset, mixing and transforming data
 3. Loading the dataset into a database
-4. Representing the data using Datasette as an analysis tool
 
 ## 🔁 Current pipelines
 

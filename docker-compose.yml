@@ -8,23 +8,33 @@ services:
     volumes:
       - ./datasets/Lamal/build/export:/app/export
     profiles: ["Lamal"]
-    command: ["pipenv", "run", "/app/utils/generate_dataset.sh"]
+    # genera el dataset y se queda vivo para que funcione el healthcheck
+    command: >
+      bash -lc "pipenv run /app/utils/generate_dataset.sh
+      && tail -f /dev/null"
+    healthcheck:
+      test: ["CMD", "test", "-f", "/app/export/lamal.csv"]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+      start_period: 5s
 
   lamal-mariadb:
     image: mariadb:latest
-    depends_on:
-      - lamal-generator
     container_name: lamal-db
+    depends_on:
+      lamal-generator:
+        condition: service_healthy
     volumes:
-        - ./datasets/Lamal/build/CreateAndImportData.sql:/docker-entrypoint-initdb.d/init.sql
-        - ./datasets/Lamal/build/export:/app/export
+      - ./datasets/Lamal/build/CreateAndImportData.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./datasets/Lamal/build/export:/app/export:ro
     restart: unless-stopped
     profiles: ["Lamal"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PsASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     command: --local-infile=1
