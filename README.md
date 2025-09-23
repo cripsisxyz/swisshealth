@@ -80,15 +80,16 @@ If you want to build the dataset without Docker, follow this instructions:
 ### 1. Install dependencies
 
 ```bash
-sudo apt-get install python3 python3-pip unzip
+sudo apt-get install python3 python3-pip unzip pipenv
 # Go to your build dataset directory (cd datasets/Lamal/build)
-pip install pipenv
+pip install pipenv (not necessary if pipenv is installed already)
 pipenv install
 ```
 
 ### 2. Run the pipeline
 
 ```bash
+# Go to your build dataset directory (cd datasets/Lamal/build)
 pipenv run bash utils/generate_dataset.sh
 ```
 
@@ -96,6 +97,8 @@ pipenv run bash utils/generate_dataset.sh
 
 - Start a local MariaDB/MySQL instance.
 - Modify the paths inside CreateAndImportData.sql for pointing to the export directory
+  ```bash
+  Example: /app/export/assurances.csv'
   ```
 - Run the import script manually:
   ```bash

@@ -152,29 +152,33 @@ while IFS= read -r year; do
   [[ -d "$script_dir/../datasource/$year" ]] || continue
 
   # Busca un CH y un EU si no están con el nombre final
-  file_ch="$(find "$script_dir/../datasource/$year" -maxdepth 1 -type f -iname "*CH*.csv" | grep -v "Praemien_CH.csv" | head -n1 || true)"
-  file_eu="$(find "$script_dir/../datasource/$year" -maxdepth 1 -type f -iname "*EU*.csv" | grep -v "Praemien_EU.csv" | head -n1 || true)"
+  file_ch="$(find "$script_dir/../datasource/$year" -maxdepth 1 -type f -iname "Pr*CH*.csv" | grep -v "Praemien_CH.csv" | head -n1 || true)"
+  file_eu="$(find "$script_dir/../datasource/$year" -maxdepth 1 -type f -iname "Pr*EU*.csv" | grep -v "Praemien_EU.csv" | head -n1 || true)"
 
   target_ch="$script_dir/../datasource/$year/Praemien_CH.csv"
   target_eu="$script_dir/../datasource/$year/Praemien_EU.csv"
 
   for src in "$file_ch" "$file_eu"; do
+
     [[ -f "$src" ]] || continue
     dst="$script_dir/../datasource/$year/$(basename "$src" | sed -E 's/.*CH.*/Praemien_CH.csv/; s/.*EU.*/Praemien_EU.csv/')"
 
     encoding="$(file -bi "$src" | sed 's/.*charset=//')"
     tmp="${dst}.tmp"
+
     if [[ "${encoding,,}" != "utf-8" ]]; then
       iconv -f "$encoding" -t utf-8 "$src" > "$tmp" || cp "$src" "$tmp"
     else
       cp "$src" "$tmp"
     fi
+
     if head -n 1 "$tmp" | grep -q ";"; then
       mv "$tmp" "$dst"
     else
       sed 's/,/;/g' "$tmp" > "$dst"
       rm -f "$tmp"
     fi
+
   done
 
   # si falta alguno, skip año

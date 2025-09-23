@@ -1,11 +1,13 @@
 USE lamal;
 
--- Limpieza
-DROP TABLE IF EXISTS assurance, communes, region, lamal, lamallight;
+-- =========================
+-- Delete tables
+-- =========================
+DROP TABLE IF EXISTS assurance, communes, region, lamal, lamallight, lamallightrank;
 DROP TABLE IF EXISTS assurance_raw, communes_raw, region_raw, lamal_raw;
 
 -- =========================
--- Tablas finales (tu esquema)
+-- Insurance tables
 -- =========================
 CREATE TABLE assurance(
     id INTEGER NOT NULL,
@@ -56,7 +58,7 @@ CREATE TABLE lamal(
 );
 
 -- =========================
--- Tablas RAW (todo texto)
+-- Raw tables (to fix data)
 -- =========================
 CREATE TABLE assurance_raw(
     id TEXT, assuranceId TEXT, useless TEXT, name TEXT, commune TEXT
@@ -78,7 +80,7 @@ CREATE TABLE lamal_raw(
 );
 
 -- =========================
--- Carga en RAW (no peta por tipos)
+-- Import data in raw.
 -- =========================
 LOAD DATA INFILE '/app/export/assurances.csv'
 INTO TABLE assurance_raw
@@ -111,7 +113,7 @@ LINES TERMINATED BY '\n'
 IGNORE 1 ROWS;
 
 -- =========================
--- Inserción limpia a finales (salta filas malas)
+-- Cleanup data
 -- =========================
 
 -- Helper: patrones
@@ -206,7 +208,82 @@ WHERE id REGEXP '^[0-9]+$'
   AND COALESCE(canton,'') <> ''
   AND COALESCE(pays,'') <> ''
   AND COALESCE(age3,'') <> ''
-  AND COALESCE(age,'') <> ''
-  AND COALESCE(tarifDesc,'') <> ''
-  AND COALESCE(tarifTyp,'') <> ''
-  AND COALESCE(tarif,'') <> '';
+  AND COALESCE(age,'') <> '';
+
+-- =========================
+-- Add indexes
+-- =========================
+
+-- Be sure id is unique on lamal and recreate it
+ALTER TABLE lamal DROP COLUMN id;
+ALTER TABLE lamal ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST;
+CREATE INDEX idx_selectprof ON lamal(canton,region,age,accident,franchise,year);
+
+ALTER TABLE `assurance` ADD INDEX(`assuranceId`);
+
+-- =========================
+-- Add table "lamallight" to speedup requests
+-- =========================
+
+DROP TABLE IF EXISTS lamallight;
+CREATE TABLE lamallight LIKE lamal;
+INSERT INTO
+    lamallight
+SELECT
+    *
+FROM
+    lamal;
+    
+ALTER TABLE
+    lamallight DROP COLUMN tarifDesc,
+    DROP COLUMN tarifTyp,
+    DROP COLUMN assuranceId,
+    DROP COLUMN age3,
+    DROP COLUMN isBaseF,
+    DROP COLUMN isBaseP,
+    DROP COLUMN tarif,
+    DROP COLUMN pays;
+
+ALTER TABLE `lamallight` ADD INDEX(`canton`);
+
+DROP TABLE IF EXISTS lamallightrank;
+
+CREATE TABLE lamallightrank AS
+SELECT s.id, s.rank
+FROM (
+    SELECT
+        id,
+        year,
+        canton,
+        region,
+        accident,
+        franchise,
+        age,
+        prime,
+        ROW_NUMBER() OVER (
+            PARTITION BY year, canton, region, accident, franchise, age
+            ORDER BY prime ASC
+        ) AS rank
+    FROM lamallight
+) s;
+
+DELETE FROM lamallight
+WHERE id IN (
+    SELECT id
+    FROM lamallightrank
+    WHERE rank >= 2
+);
+
+-- =========================
+-- Optimize tables
+-- =========================
+
+optimize table assurance;
+optimize table communes;
+optimize table lamal;
+optimize table lamallight;
+optimize table lamalrank;
+optimize table region;
+
+-- You may drop temporary tables.
+-- DROP TABLE IF EXISTS assurance_raw, communes_raw, region_raw, lamal_raw;

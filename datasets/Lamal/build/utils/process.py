@@ -5,10 +5,12 @@ from prime import Prime
 from IPython.display import display
 from datetime import datetime
 
+dest_dir = "../export"
+
 # Cleanup folders
 print("Delete and create export folder")
-shutil.rmtree("export", ignore_errors=True)
-os.mkdir("export")
+shutil.rmtree(f"{dest_dir}", ignore_errors=True)
+os.mkdir(f"{dest_dir}")
 
 # Load configuration and data
 print("Load config and data")
@@ -29,19 +31,19 @@ for filePrime in config["primes"]:
 print("Generating data")
 merge = pandas.concat(fl, axis=0)
 print("* Lamal.csv")
-merge.to_csv("../export/lamal.csv", encoding="utf-8")
+merge.to_csv(f"{dest_dir}/lamal.csv", encoding="utf-8")
 print("* Assurances.csv")
-assurances.to_csv("../export/assurances.csv", encoding="utf-8")
+assurances.to_csv(f"{dest_dir}/assurances.csv", encoding="utf-8")
 print("* Region.csv")
-region.to_csv("../export/region.csv", encoding="utf-8")
+region.to_csv(f"{dest_dir}/region.csv", encoding="utf-8")
 print("* Communes.csv")
-communes.to_csv("../export/communes.csv", encoding="utf-8")
+communes.to_csv(f"{dest_dir}/communes.csv", encoding="utf-8")
 print("* CommunesEU.csv")
-communeseu.to_csv("../export/communeseu.csv", encoding="utf-8")
+communeseu.to_csv(f"{dest_dir}/communeseu.csv", encoding="utf-8")
 
 dts = datetime.now().strftime("%Y-%m-%d %Hh%M")
-with open("../export/Generated " + dts + ".txt", mode="w") as f:
+with open(f"{dest_dir}/DateGenerated.txt", mode="w") as f:
     f.write("Generated the "+dts)
 
 # Finished
-print("Success, data is now in the export folder")
+print(f"Success, data is now in the export folder ({dest_dir})")
