@@ -4,3 +4,6 @@ datasets/Lamal/build/datasource/20*/
 datasets/Lamal/build/datasource/config.json
 datasets/Lamal/build/export/*
 !datasets/Lamal/build/export/.gitkeep
+
+# Understand-Anything (artefactos generados)
+.understand-anything/
